@@ -1,4 +1,4 @@
-export interface FilterableInterface<TValue extends any[]> {
+export interface FilterableInterface<TValue> {
   /**
    * filter :: Filterable f => f a ~> (a -> Boolean) -> f a
    * @param {(x: any) => boolean} f
