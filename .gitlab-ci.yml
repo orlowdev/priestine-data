@@ -30,6 +30,7 @@ style:
     - yarn coverage:check
   except:
     - tags
+    - master
 
 2:2 coverage:
   image: node:8-alpine
@@ -39,9 +40,10 @@ style:
     - yarn coverage:check
   except:
     - tags
+    - master
 
 coverage:report:
-  image: node:10-alpine
+  image: node:10
   stage: test
   script:
     - yarn coverage:cover
