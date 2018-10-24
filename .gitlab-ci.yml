@@ -1,13 +1,13 @@
 image: node:10-slim
 
 stages:
-- style
-- test
-- deploy
+  - style
+  - test
+  - deploy
 
 before_script:
-- npm i -g yarn
-- yarn install
+  - npm i -g yarn
+  - yarn install
 
 cache:
   key: "$CI_COMMIT_REF_SLUG"
@@ -18,39 +18,54 @@ style:
   image: node:10-alpine
   stage: style
   script:
-  - yarn style:check
+    - yarn style:check
   except:
-  - tags
+    - tags
 
 1:2 coverage:
   image: node:10
   stage: test
   script:
-  - yarn coverage:cover
-  - yarn coverage:check
+    - yarn coverage:cover
+    - yarn coverage:check
   after_script:
-  - bash <(curl -s https://codecov.io/bash) -t "${CODECOV_TOKEN}" -f coverage/*.json
+    - bash <(curl -s https://codecov.io/bash) -t "${CODECOV_TOKEN}" -f coverage/*.json
   except:
-  - tags
+    - tags
 
 2:2 coverage:
   image: node:8-alpine
   stage: test
   script:
-  - yarn coverage:cover
-  - yarn coverage:check
+    - yarn coverage:cover
+    - yarn coverage:check
   except:
-  - tags
+    - tags
+
+versioning:
+  stage: deploy
+  image: priestine/semantics:latest
+  script:
+    - priestine-semantics --private-token=${SEMANTICS_TOKEN} --fix-or-feat
+  only:
+    - master
+
+deploy:npm:
+  stage: deploy
+  script:
+    - bash deploy_npm.sh
+  only:
+    - tags
 
 pages:
   stage: deploy
   script:
-  - npm run build:docs
-  - mkdir .public
-  - cp -r docs/* .public
-  - mv .public public
+    - npm run build:docs
+    - mkdir .public
+    - cp -r docs/* .public
+    - mv .public public
   artifacts:
     paths:
-    - public
+      - public
   only:
-  - master
+    - master
