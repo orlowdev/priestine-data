@@ -9,6 +9,6 @@ export interface BifunctorInterface<T> extends FunctorInterface<T> {
    */
   bimap<TNewResultA, TNewResultB>(
     f1: (e: T) => TNewResultA,
-    f2: (e: T) => TNewResultB,
+    f2: (e: T) => TNewResultB
   ): BifunctorInterface<TNewResultA | TNewResultB>;
 }

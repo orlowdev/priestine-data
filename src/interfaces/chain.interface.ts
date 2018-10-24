@@ -6,5 +6,7 @@ export interface ChainInterface<TValue> extends ApplyInterface<TValue> {
    * @param {(x: TValue) => TNewValue} f
    * @returns {ChainInterface<TNewValue>}
    */
-  chain<TNewValue>(f: (x: TValue) => ChainInterface<TNewValue>): ChainInterface<TNewValue>;
+  chain<TNewValue>(
+    f: (x: TValue) => ChainInterface<TNewValue>
+  ): ChainInterface<TNewValue>;
 }
