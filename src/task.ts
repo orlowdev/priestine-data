@@ -18,9 +18,7 @@ export class Task<T> implements MonoidInterface<T>, MonadInterface<T>, Bifunctor
    * @returns {Task<() => TResult>}
    */
   public static empty<TResult>(): Task<() => TResult> {
-    return new Task((
-      () => {}
-    ) as () => any);
+    return new Task((() => {}) as () => any);
   }
 
   /**
@@ -43,7 +41,7 @@ export class Task<T> implements MonoidInterface<T>, MonadInterface<T>, Bifunctor
 
   public readonly fork: <TForkResolve extends Function, TForkReject extends Function, TNewResult>(
     reject: TForkReject,
-    resolve: TForkResolve,
+    resolve: TForkResolve
   ) => TNewResult;
   public readonly cleanup: (...args) => any;
 
@@ -56,15 +54,12 @@ export class Task<T> implements MonoidInterface<T>, MonadInterface<T>, Bifunctor
   public constructor(
     fork: <TForkResolve extends Function, TForkReject extends Function>(
       reject: TForkReject,
-      resolve?: TForkResolve,
+      resolve?: TForkResolve
     ) => any,
-    cleanup?: <TCleanupResult>(...args: any[]) => TCleanupResult,
+    cleanup?: <TCleanupResult>(...args: any[]) => TCleanupResult
   ) {
     this.fork = fork;
-    this.cleanup = cleanup ||
-      (
-        () => {}
-      );
+    this.cleanup = cleanup || (() => {});
   }
 
   /**
@@ -76,8 +71,8 @@ export class Task<T> implements MonoidInterface<T>, MonadInterface<T>, Bifunctor
     const thisFork = this.fork;
 
     const cleanupBoth: any = (s) => {
-      this.cleanup(s[ 0 ]);
-      x.cleanup(s[ 1 ]);
+      this.cleanup(s[0]);
+      x.cleanup(s[1]);
     };
 
     return new Task((reject, resolve) => {
@@ -117,7 +112,7 @@ export class Task<T> implements MonoidInterface<T>, MonadInterface<T>, Bifunctor
         guardResolve((f) => {
           funcLoaded = true;
           func = f;
-        }),
+        })
       );
 
       const thatState = x.fork(
@@ -125,10 +120,10 @@ export class Task<T> implements MonoidInterface<T>, MonadInterface<T>, Bifunctor
         guardResolve((v) => {
           valLoaded = true;
           val = v;
-        }),
+        })
       );
 
-      return allState = [ thisState, thatState ];
+      return (allState = [thisState, thatState]);
     }, cleanupBoth);
   }
 
@@ -168,17 +163,19 @@ export class Task<T> implements MonoidInterface<T>, MonadInterface<T>, Bifunctor
    * @param {Task<TNewArg>} x
    * @returns {Task<TNewResult>}
    */
-  public concat<TNewArg,
+  public concat<
+    TNewArg,
     TNewResult,
     TForkResolve extends Function,
     TForkReject extends Function,
-    TForkResult extends any>(x: Task<TNewArg>): Task<TNewResult> {
+    TForkResult extends any
+  >(x: Task<TNewArg>): Task<TNewResult> {
     const thisFork = this.fork;
     const thisCleanup = this.cleanup;
 
     const cleanupBoth: any = (s) => {
-      thisCleanup(s[ 0 ]);
-      x.cleanup(s[ 1 ]);
+      thisCleanup(s[0]);
+      x.cleanup(s[1]);
     };
 
     return new Task((reject, resolve) => {
@@ -196,9 +193,7 @@ export class Task<T> implements MonoidInterface<T>, MonadInterface<T>, Bifunctor
       const cState = thisFork(guard(reject), guard(resolve));
       const xState = x.fork(guard(reject), guard(resolve));
 
-      return (
-        allState = [ cState, xState ]
-      );
+      return (allState = [cState, xState]);
     }, cleanupBoth);
   }
 
@@ -210,7 +205,7 @@ export class Task<T> implements MonoidInterface<T>, MonadInterface<T>, Bifunctor
    */
   public bimap<TNewResultA, TNewResultB>(
     f: (e: T) => TNewResultA,
-    g: (e: T) => TNewResultB,
+    g: (e: T) => TNewResultB
   ): Task<TNewResultA | TNewResultB> {
     const thisFork = this.fork;
 
@@ -226,7 +221,7 @@ export class Task<T> implements MonoidInterface<T>, MonadInterface<T>, Bifunctor
    */
   public fold<TForkResolve extends Function, TForkReject extends Function, TForkResult extends any>(
     f: TForkReject,
-    g?: TForkResolve,
+    g?: TForkResolve
   ): any {
     const thisFork = this.fork;
 
@@ -282,7 +277,7 @@ export class Task<T> implements MonoidInterface<T>, MonadInterface<T>, Bifunctor
     return Task.rejected(x);
   }
 
-  public get [ Symbol.toStringTag ]() {
+  public get [Symbol.toStringTag]() {
     return 'Task';
   }
 }

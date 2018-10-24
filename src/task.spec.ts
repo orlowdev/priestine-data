@@ -18,7 +18,11 @@ describe('Task', () => {
     });
 
     it('should refer to the value as the successful branch', () => {
-      expect(Task.of('test').of('test1').fork(() => 'fail', (x) => x)).to.equal('test1');
+      expect(
+        Task.of('test')
+          .of('test1')
+          .fork(() => 'fail', (x) => x)
+      ).to.equal('test1');
     });
   });
 
@@ -38,7 +42,11 @@ describe('Task', () => {
     });
 
     it('should return a Task that will never resolve', () => {
-      expect(Task.empty().empty().fork(() => 'fail', (x) => x)).to.equal(undefined);
+      expect(
+        Task.empty()
+          .empty()
+          .fork(() => 'fail', (x) => x)
+      ).to.equal(undefined);
     });
   });
 
@@ -58,7 +66,11 @@ describe('Task', () => {
     });
 
     it('should return a rejected Task', () => {
-      expect(Task.rejected('test').rejected(1).fork(() => 'fail', (x) => x)).to.equal('fail');
+      expect(
+        Task.rejected('test')
+          .rejected(1)
+          .fork(() => 'fail', (x) => x)
+      ).to.equal('fail');
     });
   });
 
@@ -71,25 +83,33 @@ describe('Task', () => {
   describe('task.ap', () => {
     it('should apply the successful value of another task to current task', () => {
       let r;
-      Task.of((x) => x + 1).ap(Task.of(2)).fork(() => {}, (x) => r = x);
+      Task.of((x) => x + 1)
+        .ap(Task.of(2))
+        .fork(() => {}, (x) => (r = x));
       expect(r).to.equal(3);
     });
 
     it('should not apply the failure value of another task to current task', () => {
       let r;
-      Task.of((x) => x + 1).ap(Task.rejected(2)).fork(() => {}, (x) => r = x);
+      Task.of((x) => x + 1)
+        .ap(Task.rejected(2))
+        .fork(() => {}, (x) => (r = x));
       expect(r).to.equal(undefined);
     });
 
     it('should not apply the successful value of another task to current failure task', () => {
       let r;
-      Task.rejected((x) => x + 1).ap(Task.of(2)).fork(() => {}, (x) => r = x);
+      Task.rejected((x) => x + 1)
+        .ap(Task.of(2))
+        .fork(() => {}, (x) => (r = x));
       expect(r).to.equal(undefined);
     });
 
     it('should not apply the rejected value of another task to current failure task', () => {
       let r;
-      Task.rejected((x) => x + 1).ap(Task.rejected(2)).fork(() => {}, (x) => r = x);
+      Task.rejected((x) => x + 1)
+        .ap(Task.rejected(2))
+        .fork(() => {}, (x) => (r = x));
       expect(r).to.equal(undefined);
     });
   });
@@ -116,79 +136,143 @@ describe('Task', () => {
 
   describe('task.chain', () => {
     it('should transform the successful value of another task using a function to a monad', () => {
-      expect(Task.of(2).chain((x) => Task.of(x + 1)).fork(() => {}, (x) => x)).to.equal(3);
+      expect(
+        Task.of(2)
+          .chain((x) => Task.of(x + 1))
+          .fork(() => {}, (x) => x)
+      ).to.equal(3);
     });
 
     it('should transform the successful value even if another task is rejected', () => {
-      expect(Task.of(2).chain((x) => Task.rejected(x + 1)).fork((x) => x, (x) => x)).to.equal(3);
+      expect(
+        Task.of(2)
+          .chain((x) => Task.rejected(x + 1))
+          .fork((x) => x, (x) => x)
+      ).to.equal(3);
     });
 
     it('should not transform the successful value of another task to current failure task', () => {
-      expect(Task.rejected(2).chain((x) => Task.of(x + 1)).fork((x) => x, (x) => x)).to.equal(2);
+      expect(
+        Task.rejected(2)
+          .chain((x) => Task.of(x + 1))
+          .fork((x) => x, (x) => x)
+      ).to.equal(2);
     });
 
     it('should not transform the rejected value of another task to current failure task', () => {
-      expect(Task.rejected(2).chain((x) => Task.rejected(x + 1)).fork((x) => x, (x) => x)).to.equal(2);
+      expect(
+        Task.rejected(2)
+          .chain((x) => Task.rejected(x + 1))
+          .fork((x) => x, (x) => x)
+      ).to.equal(2);
     });
   });
 
   describe('task.map', () => {
     it('should transform the successful value of another task using a function to a monad', () => {
-      expect(Task.of(2).map((x) => x + 1).fork(() => {}, (x) => x)).to.equal(3);
+      expect(
+        Task.of(2)
+          .map((x) => x + 1)
+          .fork(() => {}, (x) => x)
+      ).to.equal(3);
     });
 
     it('should not transform the successful value of another task to current failure task', () => {
-      expect(Task.rejected(2).map((x) => x + 1).fork((x) => x, (x) => x)).to.equal(2);
+      expect(
+        Task.rejected(2)
+          .map((x) => x + 1)
+          .fork((x) => x, (x) => x)
+      ).to.equal(2);
     });
   });
 
   describe('task.bimap', () => {
     it('should map both sides of the disjunction if the value is a success', () => {
-      expect(Task.of(2).bimap((x) => x + 1, (x) => x - 1).fork(() => {}, (x) => x)).to.equal(1);
+      expect(
+        Task.of(2)
+          .bimap((x) => x + 1, (x) => x - 1)
+          .fork(() => {}, (x) => x)
+      ).to.equal(1);
     });
 
     it('should map both sides of the disjunction if the value is a failure', () => {
-      expect(Task.rejected(2).bimap((x) => x + 1, (x) => x - 1).fork((x) => x, (x) => x)).to.equal(3);
+      expect(
+        Task.rejected(2)
+          .bimap((x) => x + 1, (x) => x - 1)
+          .fork((x) => x, (x) => x)
+      ).to.equal(3);
     });
   });
 
   describe('task.rejectedMap', () => {
     it('should transform the rejected value of another task using a function to a monad', () => {
-      expect(Task.of(2).rejectedMap((x) => x + 1).fork((x) => x, (x) => x)).to.equal(2);
+      expect(
+        Task.of(2)
+          .rejectedMap((x) => x + 1)
+          .fork((x) => x, (x) => x)
+      ).to.equal(2);
     });
 
     it('should not transform the rejected value of another task to current failure task', () => {
-      expect(Task.rejected(2).rejectedMap((x) => x + 1).fork((x) => x, (x) => x)).to.equal(3);
+      expect(
+        Task.rejected(2)
+          .rejectedMap((x) => x + 1)
+          .fork((x) => x, (x) => x)
+      ).to.equal(3);
     });
   });
 
   describe('task.orElse', () => {
     it('should do nothing if the value is a success', () => {
-      expect(Task.of(2).orElse((x) => Task.of(x + 1)).fork(() => {}, (x) => x)).to.equal(2);
+      expect(
+        Task.of(2)
+          .orElse((x) => Task.of(x + 1))
+          .fork(() => {}, (x) => x)
+      ).to.equal(2);
     });
 
     it('should transform a failure value into a new Task if the value is a failure', () => {
-      expect(Task.rejected(2).orElse((x) => Task.of(x + 1)).fork((x) => x, (x) => x)).to.equal(3);
+      expect(
+        Task.rejected(2)
+          .orElse((x) => Task.of(x + 1))
+          .fork((x) => x, (x) => x)
+      ).to.equal(3);
     });
   });
 
   describe('task.swap', () => {
     it('should swap the disjunction values for success value', () => {
-      expect(Task.of(2).swap().fork(() => {}, (x) => x)).to.equal(undefined);
+      expect(
+        Task.of(2)
+          .swap()
+          .fork(() => {}, (x) => x)
+      ).to.equal(undefined);
     });
 
     it('should swap the disjunction values for failure value', () => {
-      expect(Task.rejected(2).swap().fork((x) => x, () => {})).to.equal(undefined);
+      expect(
+        Task.rejected(2)
+          .swap()
+          .fork((x) => x, () => {})
+      ).to.equal(undefined);
     });
   });
 
   describe('task.fold', () => {
     it('should apply the leftmost function to the failure', () => {
-      expect(Task.of(2).fold((x) => x - 1, (x) => x + 1).fork((x) => x, (x) => x)).to.equal(3);
+      expect(
+        Task.of(2)
+          .fold((x) => x - 1, (x) => x + 1)
+          .fork((x) => x, (x) => x)
+      ).to.equal(3);
     });
 
     it('should apply the rightmost function to the success', () => {
-      expect(Task.rejected(2).fold((x) => x - 1, (x) => x + 1).fork((x) => x, (x) => x)).to.equal(1);
+      expect(
+        Task.rejected(2)
+          .fold((x) => x - 1, (x) => x + 1)
+          .fork((x) => x, (x) => x)
+      ).to.equal(1);
     });
   });
 
@@ -201,13 +285,17 @@ describe('Task', () => {
   describe('task.concat', () => {
     it('should select the earlier of the two Tasks', () => {
       let r;
-      Task.of(2).concat(Task.of(3)).fork((x) => r = x, (x) => r = x);
+      Task.of(2)
+        .concat(Task.of(3))
+        .fork((x) => (r = x), (x) => (r = x));
       expect(r).to.equal(2);
     });
 
     it('should select the earlier of the two Tasks', () => {
       let r;
-      Task.rejected(2).concat(Task.of(3)).fork((x) => r = x, (x) => r = x);
+      Task.rejected(2)
+        .concat(Task.of(3))
+        .fork((x) => (r = x), (x) => (r = x));
       expect(r).to.equal(2);
     });
   });
