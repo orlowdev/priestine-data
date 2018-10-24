@@ -6,7 +6,5 @@ export interface ApplyInterface<TValue> extends FunctorInterface<TValue> {
    * @returns {ApplyInterface<TAnotherValue>}
    * @param v
    */
-  ap<TAnotherValue, TNewValue>(
-    v: ApplyInterface<TAnotherValue>
-  ): ApplyInterface<TNewValue>;
+  ap<TAnotherValue, TNewValue>(v: ApplyInterface<TAnotherValue>): ApplyInterface<TNewValue>;
 }

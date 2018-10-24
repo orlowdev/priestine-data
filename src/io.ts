@@ -11,7 +11,7 @@ export class IO<T> implements ApplicativeInterface<T>, MonadInterface<T> {
    * @returns {IO<T>}
    */
   public static from<T>(func: (...args: any[]) => T): IO<T> {
-    return new this[ Symbol.species ](func);
+    return new this[Symbol.species](func);
   }
 
   /**
@@ -26,7 +26,7 @@ export class IO<T> implements ApplicativeInterface<T>, MonadInterface<T> {
   /**
    * @returns {any}
    */
-  public static get [ Symbol.species ](): any {
+  public static get [Symbol.species](): any {
     return this;
   }
 
@@ -36,7 +36,7 @@ export class IO<T> implements ApplicativeInterface<T>, MonadInterface<T> {
    */
   public constructor(protected readonly effect: () => T) {
     if (typeof effect !== 'function') {
-      throw 'IO Usage: Function required!';
+      throw new Error('IO Usage: Function required!');
     }
   }
 
@@ -87,8 +87,7 @@ export class IO<T> implements ApplicativeInterface<T>, MonadInterface<T> {
   /**
    * @returns {string}
    */
-  public get [ Symbol.toStringTag ]() {
+  public get [Symbol.toStringTag]() {
     return 'IO';
   }
 }
-
