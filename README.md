@@ -33,7 +33,7 @@ yarn add @priestine/data
   * **Monad** extends **Applicative** and **Chain**
   * **Bifunctor** extends **Functor**
 * Common monads
-  * IO <**Applicative** & **Monad**>
-  * ~~Task~~
+  * IO <_Applicative_ & _Monad_>
+  * Task <_Monoid_ & _Monad_ & _Bifunctor_)
   * ~~Either (Left || Right)~~
   * ~~Maybe (Nothing || Just)~~
