@@ -1,0 +1,83 @@
+{
+  "name": "data",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha --timeout 15000 --require ts-node/register --require source-map-support/register --full-trace --bail $(find . -name '*.spec.ts' ! -ipath '*node_modules*')",
+    "coverage:cover": "nyc npm test",
+    "coverage:check": "nyc check-coverage --lines 75 --branches 75 --functions 75 --statements 75",
+    "tslint:check": "tslint --project tslint.json -t stylish",
+    "tslint:fix": "yarn tslint:check --fix",
+    "prettier:check": "prettier --list-different src/**/*.ts src/*.ts",
+    "prettier:fix": "prettier --write src/**/*.ts src/*.ts",
+    "style:check": "yarn prettier:check && yarn tslint:check",
+    "style:fix": "yarn prettier:fix && yarn tslint:fix",
+    "build:docs": "typedoc --out ./docs ./src --exclude '**/*.spec.ts' --ignoreCompilerErrors --mode file",
+    "build:ci": "tsc"
+  },
+  "keywords": [
+    "monad",
+    "either",
+    "maybe",
+    "task",
+    "io",
+    "fp",
+    "data"
+  ],
+  "author": {
+    "email": "priestine1.dev@gmail.com",
+    "name": "Sergey Orlov",
+    "url": "https://priestine.com"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "lodash": "^4.17.11"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@gitlab.com/priestine/data.git"
+  },
+  "bugs": {
+    "url": "https://gitlab.com/priestine/data/issues"
+  },
+  "homepage": "https://gitlab.com/priestine/data#readme",
+  "devDependencies": {
+    "@types/chai": "^4.1.6",
+    "@types/lodash": "^4.14.117",
+    "@types/mocha": "^5.2.5",
+    "@types/node": "^10.12.0",
+    "chai": "^4.2.0",
+    "codecov": "^3.1.0",
+    "mocha": "^5.2.0",
+    "nyc": "^13.1.0",
+    "prettier": "^1.14.3",
+    "ts-node": "^7.0.1",
+    "tslint": "^5.11.0",
+    "tslint-config-prettier": "^1.15.0",
+    "typedoc": "^0.13.0",
+    "typescript": "^3.1.3",
+    "yarn": "^1.10.1"
+  },
+  "nyc": {
+    "include": [
+      "src/**"
+    ],
+    "exclude": [
+      "src/**/*.spec.ts",
+      "src/*.spec.ts"
+    ],
+    "extension": [
+      ".ts"
+    ],
+    "require": [
+      "ts-node/register"
+    ],
+    "reporter": [
+      "text",
+      "json",
+      "html",
+      "lcov"
+    ]
+  }
+}
