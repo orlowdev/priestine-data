@@ -43,7 +43,7 @@ style:
     - master
 
 coverage:report:
-  image: node:10-alpine
+  image: node:10
   stage: test
   script:
     - yarn coverage:cover
