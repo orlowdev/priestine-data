@@ -35,7 +35,7 @@ export class Task<T> implements MonoidInterface<T>, MonadInterface<T>, Bifunctor
    * @param {TNewResult} x
    * @returns {Task<TNewResult>}
    */
-  public static rejected<TNewResult>(x: TNewResult): Task<TNewResult> {
+  public static rejected<TNewResult>(x?: TNewResult): Task<TNewResult> {
     return new Task((reject) => reject(x));
   }
 
@@ -48,13 +48,13 @@ export class Task<T> implements MonoidInterface<T>, MonadInterface<T>, Bifunctor
   /**
    * @constructor
    * @param {<TForkResolve extends Function, TForkReject extends Function, TForkResult extends any>(reject:
-   *   TForkReject, resolve?: TForkResolve) => TForkResult} fork
+   *   TForkReject, resolve: TForkResolve) => TForkResult} fork
    * @param {<TCleanupResult>(...args: any[]) => TCleanupResult} cleanup
    */
   public constructor(
     fork: <TForkResolve extends Function, TForkReject extends Function>(
       reject: TForkReject,
-      resolve?: TForkResolve
+      resolve: TForkResolve
     ) => any,
     cleanup?: <TCleanupResult>(...args: any[]) => TCleanupResult
   ) {
@@ -273,7 +273,7 @@ export class Task<T> implements MonoidInterface<T>, MonadInterface<T>, Bifunctor
    * @param {TNewArg} x
    * @returns {Task<TNewArg>}
    */
-  public rejected<TNewArg>(x: TNewArg): Task<TNewArg> {
+  public rejected<TNewArg>(x?: TNewArg): Task<TNewArg> {
     return Task.rejected(x);
   }
 
