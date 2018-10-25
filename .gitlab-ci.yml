@@ -24,7 +24,7 @@ style:
     - master
 
 1:2 coverage:
-  image: node:10
+  image: node:10-alpine
   stage: test
   script:
     - yarn coverage:cover
