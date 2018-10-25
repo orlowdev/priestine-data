@@ -147,11 +147,4 @@ export class Right<T> implements EitherInterface<T> {
   public toString(): string {
     return `Right(${this._value})`;
   }
-
-  /**
-   * @returns {string}
-   */
-  public get [Symbol.toStringTag](): string {
-    return 'Right';
-  }
 }

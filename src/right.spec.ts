@@ -172,4 +172,10 @@ describe('Right', () => {
       expect(Right.of('test').toString()).to.equal('Right(test)');
     });
   });
+
+  describe('[Symbol.species]', () => {
+    it('should be OK', () => {
+      expect(Right[Symbol.species]).to.be.a('function');
+    });
+  });
 });

@@ -167,4 +167,10 @@ describe('Left', () => {
       expect(Left.of(3).fold((e) => e, (r) => r + 3)).to.equal(3);
     });
   });
+
+  describe('[Symbol.species]', () => {
+    it('should be OK', () => {
+      expect(Left[Symbol.species]).to.be.a('function');
+    });
+  });
 });
