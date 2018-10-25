@@ -40,8 +40,8 @@ export class Left<T> implements EitherInterface<T> {
    * @param {Left<TAnotherValue>} v
    * @returns {Left<TNewValue>}
    */
-  public ap<TAnotherValue, TNewValue>(v: Left<TAnotherValue>): Left<TNewValue> {
-    return this as Left<any>;
+  public ap<TAnotherValue, TNewValue>(v: EitherInterface<TAnotherValue>): Left<TNewValue> {
+    return this as any;
   }
 
   /**
@@ -50,7 +50,7 @@ export class Left<T> implements EitherInterface<T> {
    * @returns {Left<TNewValue>}
    */
   public chain<TNewValue>(f: (x: T) => EitherInterface<TNewValue>): Left<TNewValue> {
-    return this as Left<any>;
+    return this as any;
   }
 
   /**
@@ -58,8 +58,8 @@ export class Left<T> implements EitherInterface<T> {
    * @param {Left<T>} x
    * @returns {Left<T>}
    */
-  public concat<TAnother>(x: EitherInterface<TAnother>): Left<T> {
-    return this;
+  public concat<TAnother>(x: EitherInterface<TAnother>): Left<TAnother> {
+    return Left.of<TAnother>(this._value as any);
   }
 
   /**
