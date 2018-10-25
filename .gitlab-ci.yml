@@ -21,6 +21,7 @@ style:
     - yarn style:check
   except:
     - tags
+    - master
 
 1:2 coverage:
   image: node:10
