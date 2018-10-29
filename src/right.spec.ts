@@ -106,7 +106,7 @@ describe('Right', () => {
       ).to.equal(3));
   });
 
-  describe('isEqual', () => {
+  describe('equals', () => {
     it('should return false if Either subclasses do not match', () =>
       expect(Right.of(3).equals(Left.of(3) as any)).to.be.false);
 
@@ -119,11 +119,11 @@ describe('Right', () => {
   describe('ap', () => {
     it('should apply the function in the Either to the value of another value', () => {
       expect(
-        Right.of((x) => x + 3)
-          .ap(Right.of(3))
+        Right.of(3)
+          .ap(Right.of((x) => x + 3))
           .unsafeGet()
       ).to.equal(6);
-      expect(Right.of((x) => x + 3).ap(Right.of(3))).to.be.instanceof(Right);
+      expect(Right.of(3).ap(Right.of((x) => x + 3))).to.be.instanceof(Right);
     });
 
     it('should not apply the function in the Either to the value of the Left', () => {
@@ -176,6 +176,111 @@ describe('Right', () => {
   describe('[Symbol.species]', () => {
     it('should be OK', () => {
       expect(Right[Symbol.species]).to.be.a('function');
+    });
+  });
+
+  describe('Setoid', () => {
+    it('REFLEXIVITY a.equals(a) === true', () => {
+      const a = Right.of(3);
+      expect(a.equals(a)).to.equal(true);
+    });
+
+    it('SYMMETRY a.equals(b) === b.equals(a)', () => {
+      const a = Right.of(3);
+      const b = Right.of(3);
+      expect(a.equals(b)).to.equal(b.equals(a));
+    });
+
+    it('TRANSITIVITY if a.equals(b) and b.equals(c) then a.equals(c)', () => {
+      const a = Right.of(3);
+      const b = Right.of(3);
+      const c = Right.of(3);
+
+      expect(a.equals(b) && b.equals(c)).to.equals(a.equals(c));
+    });
+  });
+
+  describe('Semigroup', () => {
+    it('ASSOCIATIVITY a.concat(b).concat(c) is equivalent to a.concat(b.concat(c))', () => {
+      const a = Right.of([1]);
+      const b = Right.of([2]);
+      const c = Right.of([3]);
+
+      expect(
+        a
+          .concat(b)
+          .concat(c)
+          .unsafeGet()
+      ).to.deep.equal(a.concat(b.concat(c)).unsafeGet());
+    });
+  });
+
+  describe('Functor', () => {
+    it('IDENTITY u.map(a => a) is equivalent to u', () => {
+      const u = Right.of(1);
+
+      expect(u.map((a) => a).equals(u)).to.equal(true);
+    });
+
+    it('COMPOSITION u.map(x => f(g(x))) is equivalent to u.map(g).map(f)', () => {
+      const u = Right.of(1);
+      const f = (x) => x + 1;
+      const g = (x) => x + 2;
+
+      expect(u.map((x) => f(g(x))).unsafeGet()).to.equal(
+        u
+          .map(g)
+          .map(f)
+          .unsafeGet()
+      );
+    });
+  });
+
+  describe('Apply', () => {
+    it('COMPOSITION v.ap(u.ap(a.map(f => g => x => f(g(x))))) is equivalent to v.ap(u).ap(a)', () => {
+      const v = Right.of((f) => (x) => f(x));
+      const u = Right.of((f) => (x) => f(x));
+      const a = Right.of((x) => x);
+
+      expect(v.ap(u.ap(a.map((f) => (g) => (x) => (f as any)((g as any)(x))))).toString()).to.equal(
+        v
+          .ap(u)
+          .ap(a)
+          .toString()
+      );
+    });
+  });
+
+  describe('Chain', () => {
+    it('ASSOCIATIVITY m.chain(f).chain(g) is equivalent to m.chain(x => f(x).chain(g))', () => {
+      const m = Right.of(1);
+      const f = (x) => Right.of(x + 1);
+      const g = (x) => Right.of(x + 2);
+
+      expect(
+        m
+          .chain(f)
+          .chain(g)
+          .unsafeGet()
+      ).to.equal(m.chain((x) => f(x).chain(g)).unsafeGet());
+    });
+  });
+
+  describe('Monad', () => {
+    it('LEFT IDENTITY M.of(a).chain(f) is equivalent to f(a)', () => {
+      const a = 1;
+      const f = (x) => Right.of(x + 1);
+      expect(
+        Right.of(1)
+          .chain(f)
+          .unsafeGet()
+      ).to.equal(f(a).unsafeGet());
+    });
+
+    it('RIGHT IDENTITY m.chain(M.of) is equivalent to m', () => {
+      const m = Right.of(1);
+
+      expect(m.chain(Right.of).unsafeGet()).to.equal(m.unsafeGet());
     });
   });
 });
