@@ -12,7 +12,7 @@ export interface EitherInterface<T> extends SetoidInterface<T>, SemigroupInterfa
    * @param {(x: T) => TRight} g
    * @returns {TLeft | TRight}
    */
-  fold<TLeft, TRight>(f: (x: T) => TLeft, g: (x: T) => TRight): TLeft | TRight;
+  fold<TLeft, TRight>(f: (x: T) => TLeft, g: (x: T) => TRight): any;
 
   /**
    * @returns {T}

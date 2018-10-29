@@ -40,7 +40,7 @@ export class Right<T> implements EitherInterface<T> {
    * @param {Right<TAnotherValue>} v
    * @returns {Right<TNewValue>}
    */
-  public ap<TAnotherValue, TNewValue>(v: Right<TAnotherValue>): Right<TNewValue> {
+  public ap<TAnotherValue, TNewValue>(v: EitherInterface<TAnotherValue>): EitherInterface<TNewValue> {
     return v.map(this._value as any);
   }
 
