@@ -299,4 +299,99 @@ describe('Task', () => {
       expect(r).to.equal(2);
     });
   });
+
+  describe('Semigroup', () => {
+    it('ASSOCIATIVITY a.concat(b).concat(c) is equivalent to a.concat(b.concat(c))', () => {
+      const a = Task.of([1]);
+      const b = Task.of([2]);
+      const c = Task.of([3]);
+
+      const flatten = (list) => list.reduce((a, b) => a.concat(Array.isArray(b) ? flatten(b) : b), []);
+
+      expect(
+        flatten(
+          a
+            .concat(b)
+            .concat(c)
+            .fork(() => {}, (x) => x)
+        )
+      ).to.deep.equal(flatten(a.concat(b.concat(c)).fork(() => {}, (x) => x)));
+    });
+  });
+
+  describe('Functor', () => {
+    it('IDENTITY u.map(a => a) is equivalent to u', () => {
+      const u = Task.of(1);
+
+      expect(u.map((a) => a).fork(() => {}, (x) => x)).to.equal(u.fork(() => {}, (x) => x));
+    });
+
+    it('COMPOSITION u.map(x => f(g(x))) is equivalent to u.map(g).map(f)', () => {
+      const u = Task.of(1);
+      const f = (x) => x + 1;
+      const g = (x) => x + 2;
+
+      expect(u.map((x) => f(g(x))).fork(() => {}, (x) => x)).to.equal(
+        u
+          .map(g)
+          .map(f)
+          .fork(() => {}, (x) => x)
+      );
+    });
+  });
+
+  describe('Apply', () => {
+    it('COMPOSITION v.ap(u.ap(a.map(f => g => x => f(g(x))))) is equivalent to v.ap(u).ap(a)', () => {
+      const v = Task.of((f) => (x) => f(x));
+      const u = Task.of((f) => (x) => f(x));
+      const a = Task.of((x) => x);
+
+      expect(v.ap(u.ap(a.map((f) => (g) => (x) => (f as any)((g as any)(x))))).toString()).to.equal(
+        v
+          .ap(u)
+          .ap(a)
+          .toString()
+      );
+    });
+  });
+
+  describe('Chain', () => {
+    it('ASSOCIATIVITY m.chain(f).chain(g) is equivalent to m.chain(x => f(x).chain(g))', () => {
+      const m = Task.of(1);
+      const f = (x) => Task.of(x + 1);
+      const g = (x) => Task.of(x + 2);
+
+      expect(
+        m
+          .chain(f)
+          .chain(g)
+          .fork(() => {}, (x) => x)
+      ).to.equal(m.chain((x) => f(x).chain(g)).fork(() => {}, (x) => x));
+    });
+  });
+
+  describe('Monad', () => {
+    it('LEFT IDENTITY M.of(a).chain(f) is equivalent to f(a)', () => {
+      const a = 1;
+      const f = (x) => Task.of(x + 1);
+      expect(
+        Task.of(1)
+          .chain(f)
+          .fork(() => {}, (x) => x)
+      ).to.equal(f(a).fork(() => {}, (x) => x));
+    });
+
+    it('RIGHT IDENTITY m.chain(M.of) is equivalent to m', () => {
+      const m = Task.of(1);
+
+      expect(m.chain(Task.of).fork(() => {}, (x) => x)).to.equal(m.fork(() => {}, (x) => x));
+    });
+  });
+
+  describe('Bifunctor', () => {
+    it('IDENTITY p.bimap(a => a, b => b) is equivalent to p', () => {
+      const p = Task.of(1);
+      expect(p.bimap((a) => a, (b) => b).fork(() => {}, (x) => x)).to.equal(p.fork(() => {}, (x) => x));
+    });
+  });
 });

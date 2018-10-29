@@ -40,8 +40,8 @@ export class Right<T> implements EitherInterface<T> {
    * @param {Right<TAnotherValue>} v
    * @returns {Right<TNewValue>}
    */
-  public ap<TAnotherValue, TNewValue>(v: Right<TAnotherValue>): Right<TNewValue> {
-    return v.map(this._value as any);
+  public ap<TAnotherValue, TNewValue>(v: EitherInterface<TAnotherValue>): EitherInterface<TNewValue> {
+    return v.chain((f: any) => this.map(f));
   }
 
   /**
@@ -68,7 +68,7 @@ export class Right<T> implements EitherInterface<T> {
    * @param {(e: T) => TNewResult} f
    * @returns {FunctorInterface<TNewResult>}
    */
-  public map<TAnother, TNewResult>(f: (e: T) => TNewResult): Right<TNewResult> {
+  public map<TAnother, TNewResult>(f: (x: T) => TNewResult): Right<TNewResult> {
     return Right.of(f(this._value));
   }
 
