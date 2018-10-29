@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import { IO } from './io';
+import { Right } from './right';
 
 describe('IO', () => {
   describe('IO.of', () => {
@@ -125,6 +126,75 @@ describe('IO', () => {
   describe('io.toString', () => {
     it('should return proper tagname', () => {
       expect(IO.of('').toString()).to.equal('[object IO]');
+    });
+  });
+
+  describe('Functor', () => {
+    it('IDENTITY u.map(a => a) is equivalent to u', () => {
+      const u = IO.of(1);
+
+      expect(u.map((a) => a).run()).to.equal(u.run());
+    });
+
+    it('COMPOSITION u.map(x => f(g(x))) is equivalent to u.map(g).map(f)', () => {
+      const u = IO.of(1);
+      const f = (x) => x + 1;
+      const g = (x) => x + 2;
+
+      expect(u.map((x) => f(g(x))).run()).to.equal(
+        u
+          .map(g)
+          .map(f)
+          .run()
+      );
+    });
+  });
+
+  describe('Apply', () => {
+    it('COMPOSITION v.ap(u.ap(a.map(f => g => x => f(g(x))))) is equivalent to v.ap(u).ap(a)', () => {
+      const v = IO.of((f) => (x) => f(x));
+      const u = IO.of((f) => (x) => f(x));
+      const a = IO.of((x) => x);
+
+      expect(v.ap(u.ap(a.map((f) => (g) => (x) => (f as any)((g as any)(x))))).toString()).to.equal(
+        v
+          .ap(u)
+          .ap(a)
+          .toString()
+      );
+    });
+  });
+
+  describe('Chain', () => {
+    it('ASSOCIATIVITY m.chain(f).chain(g) is equivalent to m.chain(x => f(x).chain(g))', () => {
+      const m = IO.of(1);
+      const f = (x) => IO.of(x + 1);
+      const g = (x) => IO.of(x + 2);
+
+      expect(
+        m
+          .chain(f)
+          .chain(g)
+          .run()
+      ).to.equal(m.chain((x) => f(x).chain(g)).run());
+    });
+  });
+
+  describe('Monad', () => {
+    it('LEFT IDENTITY M.of(a).chain(f) is equivalent to f(a)', () => {
+      const a = 1;
+      const f = (x) => IO.of(x + 1);
+      expect(
+        IO.of(1)
+          .chain(f)
+          .run()
+      ).to.equal(f(a).run());
+    });
+
+    it('RIGHT IDENTITY m.chain(M.of) is equivalent to m', () => {
+      const m = IO.of(1);
+
+      expect(m.chain(IO.of).run()).to.equal(m.run());
     });
   });
 });
