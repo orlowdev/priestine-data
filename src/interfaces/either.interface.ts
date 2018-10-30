@@ -53,4 +53,10 @@ export interface EitherInterface<T> extends SetoidInterface<T>, SemigroupInterfa
    * @returns {SemigroupInterface<TValue>}
    */
   concat<TValue>(x: EitherInterface<TValue>): EitherInterface<TValue>;
+
+  /**
+   * @param {T} x
+   * @returns {EitherInterface<T>}
+   */
+  swap(x: T): EitherInterface<T>;
 }
