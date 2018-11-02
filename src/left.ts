@@ -101,8 +101,8 @@ export class Left<T> implements EitherInterface<T> {
    * @param {(x: T) => TNewResult} f
    * @returns {T}
    */
-  public getOrElse<TNewResult>(f: () => TNewResult) {
-    return f();
+  public getOrElse<TNewResult>(f: (x?: T) => TNewResult): TNewResult {
+    return f(this._value);
   }
 
   /**
