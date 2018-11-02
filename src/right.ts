@@ -102,8 +102,8 @@ export class Right<T> implements EitherInterface<T> {
    * @param {(x: T) => TNewResult} f
    * @returns {T}
    */
-  public getOrElse<TNewResult>(f: () => TNewResult) {
-    return this._value;
+  public getOrElse<TNewResult>(f: (x?: T) => TNewResult): TNewResult {
+    return this._value as any;
   }
 
   /**

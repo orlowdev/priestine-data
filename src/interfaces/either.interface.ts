@@ -22,20 +22,20 @@ export interface EitherInterface<T> extends SetoidInterface<T>, SemigroupInterfa
   /**
    * map :: Functor f => f a ~> (a -> b) -> f b
    * @param {(e: T) => TNewResult} f
-   * @returns {FunctorInterface<TNewResult>}
+   * @returns {EitherInterface<TNewResult>}
    */
   map<TNewResult>(f: (e: T) => TNewResult): EitherInterface<TNewResult>;
 
   /**
    * of :: Applicative f => a -> f a
    * @param {TValue} x
-   * @returns {ApplicativeInterface<TValue>}
+   * @returns {EitherInterface<TValue>}
    */
   of<TNewValue>(x: TNewValue): EitherInterface<TNewValue>;
 
   /**
    * ap :: Apply f => f a ~> f (a -> b) -> f b
-   * @returns {ApplyInterface<TAnotherValue>}
+   * @returns {EitherInterface<TAnotherValue>}
    * @param v
    */
   ap<TAnotherValue, TNewValue>(v: EitherInterface<TAnotherValue>): EitherInterface<TNewValue>;
@@ -43,14 +43,14 @@ export interface EitherInterface<T> extends SetoidInterface<T>, SemigroupInterfa
   /**
    * chain :: Chain m => m a ~> (a -> m b) -> m b
    * @param {(x: TValue) => TNewValue} f
-   * @returns {ChainInterface<TNewValue>}
+   * @returns {EitherInterface<TNewValue>}
    */
   chain<TNewValue>(f: (x: T) => EitherInterface<TNewValue>): EitherInterface<TNewValue>;
 
   /**
    * concat :: Semigroup a => a ~> a -> a
-   * @param {TSemigroup} x
-   * @returns {SemigroupInterface<TValue>}
+   * @param {EitherInterface} x
+   * @returns {EitherInterface<TValue>}
    */
   concat<TValue>(x: EitherInterface<TValue>): EitherInterface<TValue>;
 
@@ -59,4 +59,14 @@ export interface EitherInterface<T> extends SetoidInterface<T>, SemigroupInterfa
    * @returns {EitherInterface<T>}
    */
   swap(x: T): EitherInterface<T>;
+
+  /**
+   * @param {() => TNewResult} f
+   * @returns {TNewResult}
+   */
+  getOrElse<TNewResult>(f: () => TNewResult): TNewResult;
+
+  isLeft: boolean;
+
+  isRight: boolean;
 }
