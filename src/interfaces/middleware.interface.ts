@@ -1,5 +1,5 @@
-import { SemigroupInterface } from './semigroup.interface';
+import { MonoidInterface } from './monoid.interface';
 
-export interface MiddlewareInterface<T> extends SemigroupInterface<T> {
+export interface MiddlewareInterface<T> extends MonoidInterface<T> {
   process(x: T): Promise<T>;
 }

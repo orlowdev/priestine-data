@@ -1,5 +1,4 @@
-import { MiddlewareInterface } from './interfaces';
-import { MiddlewareFunctionInterface } from './interfaces';
+import { FunctorInterface, MiddlewareInterface } from './interfaces';
 import { Pipeline } from './pipeline';
 
 /**
@@ -10,21 +9,28 @@ import { Pipeline } from './pipeline';
  * Promise that you can `.then` and `.catch`.
  * @class Middleware
  */
-export class Middleware<TContext> implements MiddlewareInterface<TContext> {
+export class Middleware<TContext, TOriginal> implements FunctorInterface<TContext>, MiddlewareInterface<TOriginal> {
   /**
    * Lift a function into Middleware.
-   * @param {MiddlewareFunctionInterface<TContext>} effect
+   * @param {(x: TContext) => TResult} effect
    * @returns {Middleware<TContext>}
    */
-  public static of<TContext>(effect: MiddlewareFunctionInterface<TContext>): Middleware<TContext> {
-    return new Middleware<TContext>(effect);
+  public static of<TContext, TResult>(effect: (x: TContext) => TResult): Middleware<TResult, TContext> {
+    return new Middleware<TResult, TContext>(effect);
+  }
+
+  /**
+   * Create a Middleware that represents an I-Combinator.
+   * @returns {Middleware<any, any>}
+   */
+  public static empty(): Middleware<any, any> {
+    return Middleware.of((x) => x);
   }
 
   /**
    * @constructor
-   * @param {MiddlewareFunctionInterface<TContext>} effect
    */
-  public constructor(readonly effect: MiddlewareFunctionInterface<TContext>) {
+  public constructor(readonly effect: (x: TOriginal) => any) {
     if (typeof effect !== 'function') {
       throw new Error('Middleware Usage: Function required!');
     }
@@ -32,20 +38,38 @@ export class Middleware<TContext> implements MiddlewareInterface<TContext> {
 
   /**
    * Process internal function of the Middleware.
-   * @param {TContext} ctx
-   * @returns {Promise<TContext>}
+   * @param {TOriginal} ctx
+   * @returns {Promise<TOriginal>}
    */
-  public process(ctx: TContext): Promise<TContext> {
+  public process(ctx: TOriginal): Promise<TOriginal> {
     return Promise.resolve(this.effect(ctx));
   }
 
   /**
    * Produce a new Pipeline that will internally store both current Middleware and the Middleware provided as an
    * argument.
-   * @param {MiddlewareInterface<TContext>} x
-   * @returns {Pipeline<TContext>}
+   * @param {MiddlewareInterface<TNewResult>} x
+   * @returns {Pipeline<TNewResult, TOriginal>}
    */
-  public concat(x: MiddlewareInterface<TContext>) {
-    return Pipeline.of([this, x]);
+  public concat<TNewResult>(x: MiddlewareInterface<TNewResult>): Pipeline<TNewResult, TOriginal> {
+    return Pipeline.of<TNewResult, TOriginal>([this as any, x]);
+  }
+
+  /**
+   * Create a Middleware that represents an I-Combinator.
+   * @returns {Middleware<any, any>}
+   */
+  public empty(): Middleware<any, any> {
+    return Middleware.empty();
+  }
+
+  /**
+   * Produce a new Pipeline that will internally store both current Middleware and the Middleware.of function provided
+   * as an argument.
+   * @param {(e: TContext) => TNewResult} f
+   * @returns {Pipeline<TNewResult>}
+   */
+  public map<TNewResult>(f: (e: TContext) => TNewResult): Pipeline<TNewResult, TOriginal> {
+    return Pipeline.of<TNewResult, TOriginal>([this, Middleware.of(f)] as any);
   }
 }
