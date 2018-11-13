@@ -1,5 +1,4 @@
-import { MiddlewareInterface } from './interfaces';
-import { MiddlewareFunctionInterface } from './interfaces';
+import { FunctorInterface, MiddlewareInterface } from './interfaces';
 import { Middleware } from './middleware';
 
 /**
@@ -9,32 +8,37 @@ import { Middleware } from './middleware';
  * executing middleware, it will return a regular Promise holding the final value which you cou can `.then` or `.catch`.
  * @class Pipeline
  */
-export class Pipeline<TContext>
-  implements MiddlewareInterface<TContext>, IterableIterator<MiddlewareInterface<TContext>> {
+export class Pipeline<TContext, TOriginal>
+  implements
+    MiddlewareInterface<TOriginal>,
+    FunctorInterface<TContext>,
+    IterableIterator<MiddlewareInterface<TContext>> {
   /**
    * Lift an array of functions into Pipeline.
-   * @param {Array<MiddlewareFunctionInterface<T>>} middleware
-   * @returns {Pipeline<T>}
+   * @param {Array<(x: TContext) => TResult>} middleware
+   * @returns {Pipeline<TContext, TContext>}
    */
-  public static from<T>(middleware: Array<MiddlewareFunctionInterface<T>>): Pipeline<T> {
-    return new Pipeline<T>(middleware.map(Middleware.of));
+  public static from<TContext, TResult>(middleware: Array<(x: TContext) => TResult>): Pipeline<TContext, TContext> {
+    return new Pipeline<TContext, TContext>(middleware.map(Middleware.of));
   }
 
   /**
    * Lift an array of Middleware into Pipeline.
-   * @param {Array<MiddlewareInterface<T>>} middleware
-   * @returns {Pipeline<T>}
+   * @param {Array<MiddlewareInterface<TContext>>} middleware
+   * @returns {Pipeline<TContext, TOriginal>}
    */
-  public static of<T>(middleware: Array<MiddlewareInterface<T>>): Pipeline<T> {
-    return new Pipeline<T>(middleware);
+  public static of<TContext, TOriginal>(
+    middleware: Array<MiddlewareInterface<TContext>>
+  ): Pipeline<TContext, TOriginal> {
+    return new Pipeline<TContext, TOriginal>(middleware);
   }
 
   /**
    * Create a Pipeline that will yield `pipeline.process` argument.
-   * @returns {Pipeline<T>}
+   * @returns {Pipeline<any, any>}
    */
-  public static empty<T>(): Pipeline<T> {
-    return Pipeline.from([]);
+  public static empty(): Pipeline<any, any> {
+    return Pipeline.of([Middleware.of((x) => x)]);
   }
 
   /**
@@ -63,23 +67,40 @@ export class Pipeline<TContext>
    * @param {MiddlewareInterface<TContext>} x
    * @returns {Pipeline<TContext>}
    */
-  public concat(x: MiddlewareInterface<TContext>) {
+  public concat<TNewResult>(x: MiddlewareInterface<TNewResult>): Pipeline<TNewResult, TOriginal> {
     const otherMiddleware = (x as any)._middleware ? (x as any)._middleware : [x];
 
-    return Pipeline.of([...this._middleware, ...otherMiddleware]);
+    return Pipeline.of<TNewResult, TOriginal>([...this._middleware, ...otherMiddleware]);
+  }
+
+  /**
+   * Create a Pipeline that will yield `pipeline.process` argument.
+   * @returns {Pipeline<T>}
+   */
+  public empty(): Pipeline<any, any> {
+    return Pipeline.of([Middleware.of((x) => x)]);
+  }
+
+  /**
+   * Apply provided function creating a new Pipeline.
+   * @param {(e: TContext) => TNewResult} f
+   * @returns {Pipeline<TNewResult>}
+   */
+  public map<TNewResult>(f: (e: TContext) => TNewResult): Pipeline<TNewResult, TOriginal> {
+    return Pipeline.of<TNewResult, TOriginal>([...this._middleware, Middleware.of(f)] as any);
   }
 
   /**
    * Process current Pipeline.
-   * @param {TContext} ctx
-   * @returns {Promise<TNewResult>}
+   * @param {TOriginal} ctx
+   * @returns {Promise<TOriginal>}
    */
-  public async process<TNewResult>(ctx: TContext): Promise<TNewResult> {
+  public async process(ctx: TOriginal): Promise<TOriginal> {
     let innerCtx = ctx;
 
     while (this._index <= this._middleware.length - 1) {
       const result = this.next();
-      const newCtx: any = await result.value.process(innerCtx);
+      const newCtx: any = await result.value.process(innerCtx as any);
 
       if (newCtx) {
         innerCtx = newCtx;

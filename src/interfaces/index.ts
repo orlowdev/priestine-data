@@ -8,7 +8,6 @@ export * from './functor.interface';
 export * from './i-combinator.interface';
 export * from './k-combinator.interface';
 export * from './middleware.interface';
-export * from './middleware-function.interface';
 export * from './monad.interface';
 export * from './monoid.interface';
 export * from './or-combinator.interface';
