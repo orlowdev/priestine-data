@@ -45,7 +45,7 @@ coverage:report:
   image: node:10
   stage: test
   script:
-    - yarn coverage:cover
+    - yarn test:cover
   after_script:
     - bash <(curl -s https://codecov.io/bash) -t "${CODECOV_TOKEN}" -f coverage/*.json
   only:
