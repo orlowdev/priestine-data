@@ -33,9 +33,5 @@ yarn add @priestine/data
   * **Monad** extends **Applicative** and **Chain**
   * **Bifunctor** extends **Functor**
 * Common monads
-  * **IO** <_Applicative_ & _Monad_>
-  * **Task** <_Monoid_ & _Monad_ & _Bifunctor_>
-  * **Middleware** <_Monoid_ & _Functor_>
-  * **Pipeline** <_Monoid_ & _Functor_>
+  * **Pipeline** <_Monoid_>
   * **Either** (Left <_Setoid_ & _Semigroup_ & _Monad_> || Right <_Setoid_ & _Semigroup_ & _Monad_>)
-  * ~~**Maybe** (Nothing || Just)~~

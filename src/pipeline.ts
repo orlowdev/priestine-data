@@ -1,134 +1,195 @@
-import { FunctorInterface, MiddlewareInterface } from './interfaces';
-import { Middleware } from './middleware';
+import { isMiddlewareContext, isMiddlewareObject } from './guards';
+import { MiddlewareContextInterface, MiddlewareLikeType, PipelineInterface } from './interfaces';
 
 /**
- * Pipeline represents linear execution of a set of Promise-based middleware. Pipeline and middleware can be used
- * interchangeably. Any extension of Middleware logic will produce creation of a Pipeline. Execution of the middleware
- * inside the Pipeline does not get triggered until you use the `pipeline.process` method. After the method finishes
- * executing middleware, it will return a regular Promise holding the final value which you cou can `.then` or `.catch`.
- * @class Pipeline
+ * Pipeline sequentially executes internally stored middleware against the context provided as .process argument.
+ *
+ * @implements IterableIterator
+ * @implements PipelineInterface
  */
-export class Pipeline<TContext, TOriginal>
-  implements
-    MiddlewareInterface<TOriginal>,
-    FunctorInterface<TContext>,
-    IterableIterator<MiddlewareInterface<TContext>> {
+export class Pipeline<TIntermediate = {}, TContext = MiddlewareContextInterface<TIntermediate>>
+  implements PipelineInterface<TIntermediate, TContext> {
   /**
-   * Lift an array of functions into Pipeline.
-   * @param {Array<(x: TContext) => TResult>} middleware
-   * @returns {Pipeline<TContext, TContext>}
+   * Pointer interface for lifting given pieces of middleware to a Pipeline.
+   *
+   * @param {...MiddlewareLikeType<TIntermediate>} middleware
+   * @returns {Pipeline<TIntermediate>}
    */
-  public static from<TContext, TResult>(middleware: Array<(x: TContext) => TResult>): Pipeline<TContext, TContext> {
-    return new Pipeline<TContext, TContext>(middleware.map(Middleware.of));
+  public static of<TIntermediate = {}, TContext = MiddlewareContextInterface<TIntermediate>>(
+    ...middleware: Array<MiddlewareLikeType<TContext>>
+  ): Pipeline<TIntermediate, TContext> {
+    return new Pipeline<TIntermediate, TContext>(middleware);
   }
 
   /**
-   * Lift an array of Middleware into Pipeline.
-   * @param {Array<MiddlewareInterface<TContext>>} middleware
-   * @returns {Pipeline<TContext, TOriginal>}
+   * Pointer interface for creating a Pipeline from array of middleware.
+   *
+   * @param {Array<MiddlewareLikeType<TIntermediate>>} middleware
+   * @returns {Pipeline<TIntermediate>}
    */
-  public static of<TContext, TOriginal>(
-    middleware: Array<MiddlewareInterface<TContext>>
-  ): Pipeline<TContext, TOriginal> {
-    return new Pipeline<TContext, TOriginal>(middleware);
+  public static from<TIntermediate = {}, TContext = MiddlewareContextInterface<TIntermediate>>(
+    middleware: Array<MiddlewareLikeType<TContext>>
+  ): Pipeline<TIntermediate, TContext> {
+    return new Pipeline<TIntermediate, TContext>([...middleware]);
   }
 
   /**
-   * Create a Pipeline that will yield `pipeline.process` argument.
-   * @returns {Pipeline<any, any>}
+   * Pointer interface for creating an empty pipeline. Context type is optional and defaults to
+   * MiddlewareContextInterface<unknown>.
+   *
+   * @returns {Pipeline<any>}
    */
-  public static empty(): Pipeline<any, any> {
-    return Pipeline.of([Middleware.of((x) => x)]);
+  public static empty<TIntermediate = unknown, TContext = MiddlewareContextInterface<TIntermediate>>(): Pipeline<
+    TIntermediate,
+    TContext
+  > {
+    return new Pipeline<TIntermediate, TContext>([]);
   }
 
   /**
-   * Internally stored array of Middleware.
+   * Internally stored array of middleware.
+   *
+   * @type MiddlewareLikeType[]
+   * @private
    */
-  protected readonly _middleware: Array<MiddlewareInterface<TContext>>;
+  private readonly _middleware: Array<MiddlewareLikeType<TContext>>;
 
   /**
    * Current iteration index.
+   *
+   * @type {number}
+   * @private
    */
-  protected _index: number;
+  private _index: number = 0;
+
+  /**
+   * Iterator done flag.
+   *
+   * @type {boolean}
+   * @private
+   */
+  private _done: boolean = false;
 
   /**
    * @constructor
-   * @param {Array<MiddlewareInterface<TContext>>} middleware
+   * @param {MiddlewareLikeType[]} middleware
    */
-  protected constructor(middleware: Array<MiddlewareInterface<TContext>>) {
-    this._index = 0;
+  public constructor(middleware: Array<MiddlewareLikeType<TContext>>) {
     this._middleware = middleware;
   }
 
   /**
-   * Concat current Pipeline with provided MiddlewareInterface creating a new Pipeline. If argument is Pipeline,
-   * internally stored Middleware of current Pipeline will be concatenated with internally stored Middleware of the
-   * argument. If argument is a Middleware, it will be pushed into internally stored array of Middleware.
-   * @param {MiddlewareInterface<TContext>} x
-   * @returns {Pipeline<TContext>}
+   * Transform Pipeline to array of middleware.
+   *
+   * @returns {MiddlewareLikeType[]}
    */
-  public concat<TNewResult>(x: MiddlewareInterface<TNewResult>): Pipeline<TNewResult, TOriginal> {
-    const otherMiddleware = (x as any)._middleware ? (x as any)._middleware : [x];
-
-    return Pipeline.of<TNewResult, TOriginal>([...this._middleware, ...otherMiddleware]);
+  public toArray(): Array<MiddlewareLikeType<TContext>> {
+    return this.middleware;
   }
 
   /**
-   * Create a Pipeline that will yield `pipeline.process` argument.
-   * @returns {Pipeline<T>}
+   * Concat current middleware with argument pipeline of the same generic type.
+   *
+   * @param {PipelineInterface<TIntermediate>} x
+   * @returns {Pipeline<TIntermediate>}
    */
-  public empty(): Pipeline<any, any> {
-    return Pipeline.of([Middleware.of((x) => x)]);
+  public concat(x: PipelineInterface<TIntermediate, TContext>): Pipeline<TIntermediate, TContext> {
+    return Pipeline.from(this.middleware.concat(x.middleware));
   }
 
   /**
-   * Apply provided function creating a new Pipeline.
-   * @param {(e: TContext) => TNewResult} f
-   * @returns {Pipeline<TNewResult>}
+   * Create a Pipeline that has no middleware.
+   *
+   * @returns {Pipeline<TIntermediate>}
    */
-  public map<TNewResult>(f: (e: TContext) => TNewResult): Pipeline<TNewResult, TOriginal> {
-    return Pipeline.of<TNewResult, TOriginal>([...this._middleware, Middleware.of(f)] as any);
+  public empty(): Pipeline<TIntermediate> {
+    return Pipeline.empty<TIntermediate>();
   }
 
   /**
-   * Process current Pipeline.
-   * @param {TOriginal} ctx
-   * @returns {Promise<TOriginal>}
+   * Sequentially process middleware internally stored in the Pipeline.
+   *
+   * If the middleware currently being executed returns a Promise, the Promise will be resolved before moving on to
+   * the next middleware. Pipeline does not block the event loop. To avoid resolving the Promise, assign it to a key
+   * of the middleware context and return void.
+   *
+   * @param {TContext} ctx
+   * @returns {Promise<any>}
    */
-  public async process(ctx: TOriginal): Promise<TOriginal> {
-    let innerCtx = ctx;
+  public async process(ctx: TContext): Promise<any> {
+    if (this.isEmpty) {
+      this._done = true;
+    }
 
-    while (this._index <= this._middleware.length - 1) {
-      const result = this.next();
-      const newCtx: any = await result.value.process(innerCtx as any);
+    while (!this.done) {
+      try {
+        const next = this.next().value;
+        const process: any = isMiddlewareObject(next) ? next.process : next;
+        const result = await process(ctx);
 
-      if (newCtx) {
-        innerCtx = newCtx;
-      }
+        if (result) {
+          if (isMiddlewareContext(ctx)) ctx.intermediate = result;
+          else ctx = result;
+        }
+      } catch (e) {
+        // TODO: Check if ctx is object and non-null
+        if (isMiddlewareContext(ctx)) {
+          ctx.error = e;
+        }
 
-      if (result.done) {
-        return innerCtx as any;
+        break;
+        // TODO: Test support for working with context that does not implement MiddlewareContextInterface
+        // TODO: Coverage 100%
       }
     }
+
+    return ctx;
   }
 
   /**
-   * @inheritDoc
-   * @param value
-   * @returns {IteratorResult<MiddlewareInterface<TContext>>}
+   * @returns {IterableIterator<MiddlewareLikeType>}
    */
-  public next(value?: any): IteratorResult<MiddlewareInterface<TContext>> {
+  public [Symbol.iterator](): IterableIterator<MiddlewareLikeType<TContext>> {
+    return this;
+  }
+
+  /**
+   * @param {MiddlewareLikeType<TContext>} value
+   * @returns {IteratorResult<MiddlewareLikeType<TContext>>}
+   */
+  public next(value?: MiddlewareLikeType<TContext>): IteratorResult<MiddlewareLikeType<TContext>> {
+    this._done = this.isEmpty || this._index === this._middleware.length - 1;
+
     return {
-      done: this._index === this._middleware.length - 1,
+      done: this._done,
       value: this._middleware[this._index++],
     };
   }
 
   /**
-   * @inheritDoc
-   * @returns {IterableIterator<MiddlewareInterface<TContext>>}
+   * Getter for _isEmpty.
+   *
+   * @returns {boolean}
    */
-  public [Symbol.iterator](): IterableIterator<MiddlewareInterface<TContext>> {
-    return this;
+  public get isEmpty(): boolean {
+    return !this._middleware.length;
+  }
+
+  /**
+   * Getter for _done.
+   *
+   * @returns {boolean}
+   */
+  public get done(): boolean {
+    return this._done;
+  }
+
+  /**
+   * Getter for _middleware.
+   *
+   * @returns {Array<MiddlewareLikeType<TContext>>}
+   */
+  public get middleware(): Array<MiddlewareLikeType<TContext>> {
+    return this._middleware;
   }
 }

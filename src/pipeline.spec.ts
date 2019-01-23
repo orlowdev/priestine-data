@@ -1,26 +1,55 @@
-import { Middleware } from './middleware';
+import { MiddlewareContext } from './middleware-context';
 import { Pipeline } from './pipeline';
 import { expect } from 'chai';
 
 describe('Pipeline', () => {
   describe('Iterator', () => {
-    const mw1 = Middleware.of((ctx: number) => ctx + 1);
-    const mw2 = Middleware.of((ctx: number) => ctx + 2);
-    const mw3 = Middleware.of((ctx: number) => ctx + 3);
-    const to = (x) => new Promise<number>((resolve) => setTimeout(() => resolve(x + 4), 1));
-    const amw1 = Middleware.of((ctx: number) => to(ctx) as any);
+    const mw1 = (x) => x.intermediate + 1;
+    const mw2 = (x) => x.intermediate + 2;
+    const mw3 = (x) => x.intermediate + 3;
+    const amw1 = (x) =>
+      new Promise((resolve) =>
+        setTimeout(() => {
+          x.intermediate = x.intermediate + 4;
+          resolve();
+        }, 1)
+      );
 
     it('should consecutively run synchronous code', async () => {
-      expect(await Pipeline.of([mw1, mw2, mw3]).process(1)).to.equal(7);
+      expect((await Pipeline.from<any, any>([mw1, mw2, mw3]).process(MiddlewareContext.of(1))).intermediate).to.equal(
+        7
+      );
     });
 
     it('should consecutively run Promise-based code', async () => {
-      expect(await Pipeline.of([amw1, mw1]).process(1)).to.equal(6);
-      expect(await Pipeline.of([mw1, amw1]).process(1)).to.equal(6);
+      expect((await Pipeline.from([amw1, mw1]).process(MiddlewareContext.of(1))).intermediate).to.equal(6);
+      expect((await Pipeline.from([mw1, amw1]).process(MiddlewareContext.of(1))).intermediate).to.equal(6);
     });
 
     it('should do nothing if array of Middleware is empty', async () => {
-      expect(await Pipeline.of([]).process(1)).to.equal(undefined);
+      expect((await Pipeline.from([]).process(MiddlewareContext.of(1))).intermediate).to.equal(1);
+    });
+
+    it('should work with ctx that does not extend MiddlewareContext', async () => {
+      expect(
+        await Pipeline.from<any, string>([(x) => x.toUpperCase(), (x) => x.toLowerCase()]).process('Test')
+      ).to.equal('test');
+    });
+
+    it('should throw error if ctx is MiddlewareContext and the pipeline errored', async () => {
+      try {
+        await Pipeline.of<string>((ctx) => ctx.intermediate.toUpperCase()).process(MiddlewareContext.of(1 as any));
+      } catch (e) {
+        expect(e).to.be.instanceOf(TypeError);
+      }
+    });
+
+    it('should throw error if ctx is not MiddlewareContext and the pipeline errored', async () => {
+      try {
+        await Pipeline.of<unknown, string>((ctx) => ctx.toUpperCase()).process(1 as any);
+      } catch (e) {
+        expect(e).to.be.instanceOf(TypeError);
+      }
     });
 
     it('[Symbol.iterator]', () => {
@@ -30,69 +59,46 @@ describe('Pipeline', () => {
 
   describe('Semigroup', () => {
     it('ASSOCIATIVITY a.concat(b).concat(c) is equivalent to a.concat(b.concat(c))', async () => {
-      const a = Pipeline.from([(x: number) => x + 1]);
-      const b = Pipeline.from([(x: number) => x + 2]);
-      const c = Pipeline.from([(x: number) => x + 3]);
+      const a = Pipeline.of<number>({ process: (x) => x.intermediate + 1 });
+      const b = Pipeline.from<number>([(x) => x.intermediate + 2]);
+      const c = Pipeline.from<number>([(x) => x.intermediate + 3]);
 
       expect(
         await a
           .concat(b)
           .concat(c)
-          .process(1)
-      ).to.equal(await a.concat(b.concat(c)).process(1));
-
-      expect(await a.concat(Middleware.of((x: number) => x + 4)).process(1)).to.equal(
-        await Pipeline.from([(x: number) => x + 1, (x: number) => x + 4]).process(1)
-      );
-
-      expect(await a.concat(Middleware.of(((x) => {}) as any)).process(1)).to.equal(
-        await Pipeline.from([(x: number) => x + 1]).process(1)
-      );
-    });
-  });
-
-  describe('Functor', () => {
-    it('IDENTITY u.map(a => a) is equivalent to u', async () => {
-      const u = Pipeline.from([(x) => x]);
-
-      expect(await u.map((a) => a).process(1)).to.equal(1);
-    });
-
-    it('COMPOSITION u.map(x => f(g(x))) is equivalent to u.map(g).map(f)', async () => {
-      const u = Pipeline.from([(x: number) => x + 1]);
-      const f = (x) => x + 1;
-      const g = (x) => x + 2;
-
-      expect(await u.map((x) => f(g(x))).process(1)).to.equal(
-        await u
-          .map(g)
-          .map(f)
-          .process(1)
-      );
+          .process(MiddlewareContext.of(1))
+      ).to.deep.equal(await a.concat(b.concat(c)).process(MiddlewareContext.of(1)));
     });
   });
 
   describe('Monoid', () => {
     it('RIGHT IDENTITY m.concat(M.empty()) is equivalent to m', async () => {
-      const m = Pipeline.from([Number.parseInt]);
-      expect(await m.concat(Pipeline.empty()).process('3')).to.equal(await m.process('3'));
+      const m = Pipeline.from<string>([(x) => Number.parseInt(x.intermediate)]);
+      expect(await m.concat(Pipeline.empty()).process(MiddlewareContext.of('3'))).to.deep.equal(
+        await m.process(MiddlewareContext.of('3'))
+      );
     });
 
     it('LEFT IDENTITY M.empty().concat(m) is equivalent to m', async () => {
-      const m = Pipeline.from([Number.parseInt]);
+      const m = Pipeline.from<string>([(x) => Number.parseInt(x.intermediate)]);
       expect(
         await Pipeline.empty()
           .concat(m)
-          .process('3')
-      ).to.equal(await m.process('3'));
+          .process(MiddlewareContext.of('3'))
+      ).to.deep.equal(await m.process(MiddlewareContext.of('3')));
     });
 
     it('is same for instance and static methods', async () => {
-      expect(await Pipeline.empty().process('3')).to.equal(
-        await Pipeline.empty()
-          .empty()
-          .process('3')
-      );
+      expect(Pipeline.empty()).to.deep.equal(Pipeline.empty().empty());
+    });
+  });
+
+  describe('toArray', () => {
+    it('should return internally stored middleware as array', () => {
+      const arr = [(x) => x.intermediate + 2, (x) => x.intermediate + 3];
+
+      expect(Pipeline.from(arr).toArray()).to.deep.equal(arr);
     });
   });
 });
