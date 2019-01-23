@@ -1,7 +1,7 @@
 {
   "name": "@priestine/data",
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.0.0-dev",
+  "description": "Functional data types, most common algebraic structures as interfaces (FL and SL compliant) and frequently used monads.",
   "main": "index.js",
   "publishConfig": {
     "access": "public"
