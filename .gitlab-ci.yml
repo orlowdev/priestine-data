@@ -27,8 +27,7 @@ style:
   image: node:10-alpine
   stage: test
   script:
-    - yarn coverage:cover
-    - yarn coverage:check
+    - yarn test:cover
   except:
     - tags
     - master
@@ -37,8 +36,7 @@ style:
   image: node:8-alpine
   stage: test
   script:
-    - yarn coverage:cover
-    - yarn coverage:check
+    - yarn test:cover
   except:
     - tags
     - master

@@ -16,3 +16,7 @@ export * from './s-combinator.interface';
 export * from './semigroup.interface';
 export * from './semigroupoid.interface';
 export * from './setoid.interface';
+export * from './pipeline.interface';
+export * from './middleware-context.interface';
+export * from './middleware-function.interface';
+export * from './middleware-like.type';
