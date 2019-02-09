@@ -37,9 +37,7 @@
     "url": "https://priestine.com"
   },
   "license": "MIT",
-  "dependencies": {
-    "lodash": "^4.17.11"
-  },
+  "dependencies": {},
   "repository": {
     "type": "git",
     "url": "git+ssh://git@gitlab.com/priestine/data.git"
