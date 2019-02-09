@@ -34,4 +34,5 @@ yarn add @priestine/data
   * **Bifunctor** extends **Functor**
 * Common monads
   * **Pipeline** <_Monoid_>
+  * **SyncPipeline** <_Monoid_>
   * **Either** (Left <_Setoid_ & _Semigroup_ & _Monad_> || Right <_Setoid_ & _Semigroup_ & _Monad_>)

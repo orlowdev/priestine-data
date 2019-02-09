@@ -37,4 +37,12 @@ export interface PipelineInterface<TIntermediate = {}, TContext = MiddlewareCont
    * @returns {Promise<any>}
    */
   process(ctx: TContext): Promise<any>;
+
+  /**
+   * Concat current middleware with argument pipeline of the same generic type.
+   *
+   * @param {PipelineInterface<TIntermediate>} x
+   * @returns {PipelineInterface<TIntermediate>}
+   */
+  concat(x: PipelineInterface<TIntermediate, TContext>): PipelineInterface<TIntermediate, TContext>;
 }
