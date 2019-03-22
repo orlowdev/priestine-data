@@ -88,10 +88,3 @@ export class SyncPipeline<
     return ctx;
   }
 }
-
-console.log(
-  SyncPipeline.of<any, number>((x) => x + 1)
-    .concat(SyncPipeline.of((x) => x - 1))
-    .concat(SyncPipeline.of((x) => x * 2))
-    .process(1)
-);
